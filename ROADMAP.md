@@ -49,6 +49,14 @@ editable scripts instead), and features that need Microsoft cloud services (Copi
 Geography data types, co-authoring through OneDrive, Smart Lookup, Translate) will be replaced
 by open equivalents or left out, not cloned.
 
+### Recently landed
+
+- Web library (OE7): `crates/wasm` (`gridcraft-wasm`, npm `@tutorfulhk/gridcraft-wasm`, tag
+  `wasm-v*`) runs the engine headless in a Web Worker: open `.xlsx`/`.csv`/`.tsv`, save
+  `.xlsx`/`.csv`/`.tsv`, render a sheet as HTML, and convert to and from Workbook JSON v1
+  ([`docs/workbook-json.md`](docs/workbook-json.md)) for hosts that map it onto their own grid
+  (Univer). 1.64 MB gzip. Legacy `.xls` is not read yet.
+
 ### What's left
 
 | Area | What's missing | Est. hours |

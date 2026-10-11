@@ -42,6 +42,8 @@ pub const TABLE: &[(&str, Class)] = &[
     ("gridcraft", Class::Layer(7)),
     ("cli", Class::Layer(7)),
     ("web", Class::Layer(7)),
+    // Headless WebAssembly library over the engine (packaging/wasm).
+    ("wasm", Class::Exempt),
     ("xtask", Class::Exempt),
 ];
 
