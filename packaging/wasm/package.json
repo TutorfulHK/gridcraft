@@ -1,0 +1,29 @@
+{
+  "name": "@tutorfulhk/gridcraft-wasm",
+  "version": "0.0.0-template",
+  "description": "GridCraft as a headless WebAssembly library: open and save XLSX and CSV, convert to and from Workbook JSON (for grid editors such as Univer), render a sheet as HTML.",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TutorfulHK/gridcraft.git",
+    "directory": "crates/wasm"
+  },
+  "type": "module",
+  "main": "gridcraft_wasm.js",
+  "module": "gridcraft_wasm.js",
+  "types": "gridcraft_wasm.d.ts",
+  "files": [
+    "gridcraft_wasm.js",
+    "gridcraft_wasm.d.ts",
+    "gridcraft_wasm_bg.wasm",
+    "gridcraft_wasm_bg.wasm.d.ts",
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE",
+    "NOTICE"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

@@ -4,6 +4,7 @@
 pub mod data;
 pub mod draw;
 pub mod edit;
+pub mod exchange;
 pub mod extra;
 pub mod file;
 pub mod format;
@@ -106,6 +107,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
     SPECS.get_or_init(|| {
         let mut v = Vec::new();
         v.extend(file::specs());
+        v.extend(exchange::specs());
         v.extend(edit::specs());
         v.extend(format::specs());
         v.extend(sheet::specs());
@@ -216,9 +218,22 @@ pub(crate) fn edit<R>(s: &mut Session, f: impl FnOnce(&mut Ctx) -> Result<R>) ->
     commit(d, f)
 }
 
+/// Elapsed time for `GRIDCRAFT_PROFILE`; never reads the clock when profiling is off.
+struct Timer(Option<std::time::Instant>);
+
+impl Timer {
+    fn start(on: bool) -> Timer {
+        Timer(on.then(std::time::Instant::now))
+    }
+    fn elapsed(&self) -> std::time::Duration {
+        self.0.map(|t| t.elapsed()).unwrap_or_default()
+    }
+}
+
 pub(crate) fn commit<R>(d: &mut DocState, f: impl FnOnce(&mut Ctx) -> Result<R>) -> Result<R> {
-    let prof = std::env::var_os("GRIDCRAFT_PROFILE").is_some();
-    let t0 = std::time::Instant::now();
+    // Profiling only off wasm: `Instant::now` traps on wasm32-unknown-unknown (no clock).
+    let prof = cfg!(not(target_arch = "wasm32")) && std::env::var_os("GRIDCRAFT_PROFILE").is_some();
+    let t0 = Timer::start(prof);
     let mut sel = d.selection.clone();
     let mut ctx = Ctx { wb: (*d.wb).clone(), changed: Vec::new(), structural: false, sel: &mut sel, fit_rows: Vec::new() };
     let r = f(&mut ctx)?;

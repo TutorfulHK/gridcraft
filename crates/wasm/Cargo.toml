@@ -1,0 +1,18 @@
+[package]
+name = "gridcraft-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "GridCraft as a headless WebAssembly library: open and save XLSX and CSV, convert to and from Workbook JSON, render a sheet as HTML"
+publish = false
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+gridcraft-engine = { workspace = true }
+serde_json = { workspace = true }
+wasm-bindgen = "0.2"

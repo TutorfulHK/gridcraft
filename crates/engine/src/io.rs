@@ -40,6 +40,16 @@ pub fn open_bytes(name: &str, bytes: &[u8]) -> Result<(Workbook, Vec<String>)> {
         let (wb, report) = gridcraft_xlsx::read_xlsx(bytes).map_err(|e| EngineError::Other(format!("We can't open '{name}': {e}")))?;
         return Ok((wb, report.warnings));
     }
+    // Binary that isn't a zip package: legacy .xls (BIFF), .xlsb, an image… Parsing it as CSV
+    // would fill a sheet with garbage.
+    if sniffed == gridcraft_xlsx::Format::Unknown && !bytes.is_empty() && kind != Some(FileKind::Json) {
+        let what = if bytes.starts_with(&[0xD0, 0xCF, 0x11, 0xE0]) {
+            "it is a legacy Excel 97–2003 (.xls) workbook, which GridCraft can't read yet"
+        } else {
+            "it isn't a workbook GridCraft can read"
+        };
+        return Err(EngineError::Other(format!("We can't open '{name}': {what}. Save it as .xlsx or .csv first.")));
+    }
     match kind {
         Some(FileKind::Json) => {
             let mut wb: Workbook = serde_json::from_slice(bytes).map_err(|e| EngineError::Other(format!("not a GridCraft JSON workbook: {e}")))?;

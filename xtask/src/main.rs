@@ -121,14 +121,15 @@ fn cmd_layers() -> Result<(), String> {
     }
 }
 
-/// Workspace packages that must build for wasm32: every L0–L5 crate, plus the web app once it
-/// exists (`apps/gridcraft-web`).
+/// Workspace packages that must build for wasm32: every L0–L5 crate, the web app
+/// (`apps/gridcraft-web`) and the headless wasm library (`crates/wasm`).
 fn wasm_set() -> Result<Vec<String>, String> {
     let crates = layers::from_metadata(&metadata()?)?;
     Ok(crates
         .into_iter()
         .filter(|c| match layers::classify(&c.name) {
             Some(layers::Class::Layer(l)) => l <= 5 || c.name == "gridcraft-web",
+            Some(layers::Class::Exempt) => c.name == "gridcraft-wasm",
             _ => false,
         })
         .map(|c| c.name)

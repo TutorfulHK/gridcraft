@@ -16,6 +16,7 @@ pub mod pivot;
 pub mod sample;
 pub mod selection;
 pub mod tables;
+pub mod workbook_json;
 
 use std::sync::Arc;
 

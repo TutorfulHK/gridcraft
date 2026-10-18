@@ -11,7 +11,7 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!(noundo "file.open", "Open…", ["File"], Some("Cmd+O"), "{path} | {name, base64} (xlsx, xlsm, csv, tsv, txt, json)", always, open),
         cmd!(noundo "file.save", "Save", ["File"], Some("Cmd+S"), "{path?} (xlsx by default; .csv/.tsv/.json/.html by extension)", has_doc, save),
         cmd!(noundo "file.saveAs", "Save As…", ["File"], Some("Cmd+Shift+S"), "{path}", has_doc, save_as),
-        cmd!(query "file.saveBytes", "Encode Workbook", [], None, "{format?: xlsx|csv|tsv|json|html} → {base64}", has_doc, save_bytes),
+        cmd!(query "file.saveBytes", "Encode Workbook", [], None, "{format?: xlsx|csv|tsv|html|json, sheet?: index (csv/tsv/html)} → {data: base64, contentType, name, bytes}", has_doc, save_bytes),
         cmd!(noundo "file.close", "Close", ["File"], Some("Cmd+W"), "{force?: bool}", has_doc, close),
         cmd!(noundo "file.exportCsv", "Export as CSV", ["File", "Export"], None, "{path, sheet?}", has_doc, |s, p| export(s, p, "csv")),
         cmd!(noundo "file.exportHtml", "Save as Web Page", ["File", "Export"], None, "{path}", has_doc, |s, p| export(s, p, "html")),
@@ -32,7 +32,7 @@ fn new_workbook(s: &mut Session, p: &Json) -> Result<Json> {
     Ok(json!({"index": i, "title": s.doc()?.display_title()}))
 }
 
-fn open(s: &mut Session, p: &Json) -> Result<Json> {
+pub(crate) fn open(s: &mut Session, p: &Json) -> Result<Json> {
     let (name, bytes) = if let Some(b) = str_param(p, "base64") {
         (str_param(p, "name").unwrap_or("Book.xlsx").to_string(), crate::io::base64_decode(b).ok_or_else(|| bad("file.open", "invalid base64"))?)
     } else if let Some(path) = str_param(p, "path") {
@@ -91,11 +91,17 @@ fn save_as(s: &mut Session, p: &Json) -> Result<Json> {
 }
 
 fn save_bytes(s: &mut Session, p: &Json) -> Result<Json> {
-    let fmt = str_param(p, "format").unwrap_or("xlsx");
+    let fmt = str_param(p, "format").unwrap_or("xlsx").trim().trim_start_matches('.').to_ascii_lowercase();
+    let sheet = match p.get("sheet") {
+        None | Some(Json::Null) => None,
+        Some(_) => Some(target_sheet(s, p)?),
+    };
+    let bytes = super::exchange::save_bytes(s, &fmt, sheet)?;
     let d = s.doc()?;
-    let bytes = crate::io::save_bytes(&d.wb, &format!("x.{fmt}"))?;
     let name = format!("{}.{fmt}", std::path::Path::new(&d.display_title()).file_stem().and_then(|x| x.to_str()).unwrap_or("Book"));
-    Ok(json!({"name": name, "base64": crate::io::base64_encode(&bytes), "bytes": bytes.len()}))
+    let data = crate::io::base64_encode(&bytes);
+    // `base64` is the older name of `data`, kept for existing callers.
+    Ok(json!({"name": name, "data": data, "base64": data, "contentType": super::exchange::content_type(&fmt), "bytes": bytes.len()}))
 }
 
 fn close(s: &mut Session, p: &Json) -> Result<Json> {
